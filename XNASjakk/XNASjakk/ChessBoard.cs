@@ -47,6 +47,7 @@ namespace XNASjakk
         bool disconnected = false; // Set to true if someone disconnects to show message.
 
         String errorString = "Ingen Motstander Tilkoblet.";
+        bool hasOpponent = false;
         NetworkManager networkManager = new NetworkManager();
         MouseState oldMouse = new MouseState();
         MouseState newMouse = new MouseState();
@@ -219,7 +220,14 @@ namespace XNASjakk
                         reconnectTimer -= gameTime.ElapsedGameTime.TotalSeconds;
                 }
             }
-            else
+            else if (!hasOpponent)
+            {
+                if (networkManager.ReturnByte() == 101)
+                {
+                    hasOpponent = true;
+                }
+            }
+            else if (!disconnected)
             {
                 if (server && networkManager.isDataAvailableServer())
                 {
@@ -234,6 +242,10 @@ namespace XNASjakk
                         case 99:
                             receiveMove r = networkManager.ReceiveMove();
                             MovePiece(r.id, r.x, r.y);
+                            break;
+                        case 100:
+                            // errorString = "Mostander frakoblet. \nEscape for nytt spill.";
+                            disconnected = true;
                             break;
                         default:
 
@@ -254,8 +266,12 @@ namespace XNASjakk
                             receiveMove r = networkManager.ReceiveMove();
                             MovePiece(r.id, r.x, r.y);
                             break;
+                        case 100:
+                            // errorString = "Mostander frakoblet. \nEscape for nytt spill.";
+                            disconnected = true;
+                            break;
                         default:
-                            
+
                             break;
                     }
                 }
@@ -281,7 +297,7 @@ namespace XNASjakk
                         networkManager.SendUndo();
                         UndoMove(moves[moves.Count - 1]);
                     }
-                } 
+                }
                 else if (newKey.IsKeyDown(Keys.Left) && oldKey.IsKeyUp(Keys.Left))
                 {
                     if (moves.Count > 0)
@@ -322,7 +338,7 @@ namespace XNASjakk
                         {
                             selectedY = newClickY;
                             selectedX = newClickX;
-                                
+
                             networkManager.SendMove(selectedPiece.Id, newClickX, newClickY);
                             MovePiece(selectedPiece.Id, newClickX, newClickY);
                             move = false;
