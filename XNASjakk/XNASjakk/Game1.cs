@@ -89,6 +89,7 @@ namespace XNASjakk
 
                 if (key.IsKeyDown(Keys.Escape) && newgameCD <= 0)
                 {
+                    chess.Destroy();
                     chess.Exit();
                     Components.Clear();
 

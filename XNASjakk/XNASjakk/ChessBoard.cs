@@ -46,7 +46,7 @@ namespace XNASjakk
 
         bool disconnected = false; // Set to true if someone disconnects to show message.
 
-        String errorString = "Ingen Motstander Tilkoblet.";
+        String errorString = "Ikke tilkoblet server.";
         bool hasOpponent = false;
         NetworkManager networkManager = new NetworkManager();
         MouseState oldMouse = new MouseState();
@@ -222,9 +222,12 @@ namespace XNASjakk
             }
             else if (!hasOpponent)
             {
-                if (networkManager.ReturnByte() == 101)
+                if (networkManager.isDataAvailableClient())
                 {
-                    hasOpponent = true;
+                    if (networkManager.ReturnByte() == 101)
+                    {
+                        hasOpponent = true;
+                    }
                 }
             }
             else if (!disconnected)
@@ -360,6 +363,10 @@ namespace XNASjakk
             {
                 spriteBatch.DrawString(font, errorString, new Vector2(50, 250), Color.Black);
             }
+            else if (!hasOpponent)
+            {
+                spriteBatch.DrawString(font, "Venter pa motstander.", new Vector2(50, 250), Color.Black);
+            }
             else
             {
                 for (int i = 1; i <= GameConstants.boardHeight; i++)
@@ -392,7 +399,7 @@ namespace XNASjakk
 
                 // ----
 
-                if(disconnected)
+                if (disconnected)
                     spriteBatch.DrawString(font, "Mistet kobling. \nEscape for nytt spill.", new Vector2(50, 250), Color.Black);
             }
 
@@ -452,6 +459,11 @@ namespace XNASjakk
                 }
             }
             moves.Remove(m);
+        }
+
+        public void Destroy()
+        {
+            networkManager.CloseDown();
         }
     }
 }
