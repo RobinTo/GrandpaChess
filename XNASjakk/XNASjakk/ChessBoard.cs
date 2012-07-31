@@ -198,6 +198,8 @@ namespace XNASjakk
             base.LoadContent();
         }
 
+        double reconnectTimer = 0.2;
+
         public override void Update(GameTime gameTime)
         {
             if (!connected)
@@ -208,7 +210,13 @@ namespace XNASjakk
                 }
                 else
                 {
-                    connected = networkManager.TryConnect();
+                    if (reconnectTimer <= 0)
+                    {
+                        connected = networkManager.TryConnect();
+                        reconnectTimer = 5.0; // Added a small timer to enable closing of client window.
+                    }
+                    else
+                        reconnectTimer -= gameTime.ElapsedGameTime.TotalSeconds;
                 }
             }
             else
@@ -232,7 +240,7 @@ namespace XNASjakk
                             break;
                     }
                 }
-                else if (networkManager.isDataAvailableClient())
+                else if (!server && networkManager.isDataAvailableClient())
                 {
                     switch (networkManager.ReturnByte())
                     {
