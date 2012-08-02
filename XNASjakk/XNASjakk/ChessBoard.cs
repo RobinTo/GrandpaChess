@@ -113,7 +113,7 @@ namespace XNASjakk
 
             try
             {
-                server = System.IO.File.ReadAllText("settings.txt") == "s" ? true : false;
+                server = false;
                 String ipString = System.IO.File.ReadAllText("ipAddresse.txt");
                 if (server)
                 {

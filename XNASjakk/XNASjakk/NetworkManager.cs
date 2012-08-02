@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 
 namespace XNASjakk
 {
@@ -23,6 +24,43 @@ namespace XNASjakk
         string ip;
         BinaryWriter bw;
         BinaryReader br;
+
+        StringBuilder sb = new StringBuilder();
+        byte[] buf = new byte[8192];
+
+        public string receiveIP()
+        {
+            HttpWebRequest request = (HttpWebRequest)
+        WebRequest.Create("http://www.robint.net/chessip.txt");
+
+            // execute the request
+            HttpWebResponse response = (HttpWebResponse)
+                request.GetResponse();
+            // we will read data via the response stream
+            Stream resStream = response.GetResponseStream();
+            string tempString = null;
+            int count = 0;
+
+            do
+            {
+                // fill the buffer with data
+                count = resStream.Read(buf, 0, buf.Length);
+
+                // make sure we read some data
+                if (count != 0)
+                {
+                    // translate from bytes to ASCII text
+                    tempString = Encoding.ASCII.GetString(buf, 0, count);
+
+                    // continue building the string
+                    sb.Append(tempString);
+                }
+            }
+            while (count > 0); // any more data to read?
+
+            // print out page source
+            return(sb.ToString());
+        }
 
         public bool StartServer(string ip)
         {
@@ -66,6 +104,15 @@ namespace XNASjakk
                 client = new TcpClient();
 
                 this.ip = ip;
+                string onlineIP = receiveIP();
+                if (this.ip != onlineIP)
+                {
+                    this.ip = onlineIP;
+                    using (StreamWriter writer =  new StreamWriter("ipAddresse.txt"))
+                    {
+                        writer.Write(onlineIP);
+                    }
+                }
 
                 return true;
             }
