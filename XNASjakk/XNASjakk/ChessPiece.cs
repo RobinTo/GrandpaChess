@@ -68,10 +68,15 @@ namespace XNASjakk
 
         }
 
-        public virtual void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+        public virtual void Draw(GameTime gameTime, SpriteBatch spriteBatch, bool rotated)
         {
-            if(visible)
-                spriteBatch.Draw(pieceTexture, new Vector2(parentX + (x-1) * GameConstants.squareHeight, parentY + (y-1) * GameConstants.squareWidth), color);
+            if (visible)
+            {
+                if(!rotated)
+                    spriteBatch.Draw(pieceTexture, new Vector2(parentX + (x - 1) * GameConstants.squareHeight, parentY + (y - 1) * GameConstants.squareWidth), color);
+                else
+                    spriteBatch.Draw(pieceTexture, new Vector2(parentX + (7-(x - 1)) * GameConstants.squareHeight, parentY + (7-(y - 1)) * GameConstants.squareWidth), color);
+            }
         }
     }
 }

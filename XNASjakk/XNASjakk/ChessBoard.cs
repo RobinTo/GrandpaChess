@@ -46,6 +46,9 @@ namespace XNASjakk
 
         bool disconnected = false; // Set to true if someone disconnects to show message.
 
+
+        bool rotate = false;
+
         String errorString = "Ikke tilkoblet server.";
         bool hasOpponent = false;
         NetworkManager networkManager = new NetworkManager();
@@ -131,13 +134,13 @@ namespace XNASjakk
 
            
 
-            for (int i = 0; i <= GameConstants.boardWidth; i++)
+            for (int i = 1; i <= GameConstants.boardWidth; i++)
             {
                 ChessPiece pawnPiece = new ChessPiece(id, pawn, i, 2, Color.White);
                 pieces.Add(pawnPiece);
                 id++;
             }
-            for (int i = 0; i <= GameConstants.boardWidth; i++)
+            for (int i = 1; i <= GameConstants.boardWidth; i++)
             {
                 ChessPiece pawnPiece = new ChessPiece(id, pawn, i, 7, Color.Black);
                 pieces.Add(pawnPiece);
@@ -309,6 +312,10 @@ namespace XNASjakk
                         UndoMove(moves[moves.Count - 1]);
                     }
                 }
+                else if (newKey.IsKeyDown(Keys.Enter) && oldKey.IsKeyUp(Keys.Enter))
+                {
+                    rotate = !rotate;
+                }
 
                 if (newMouse.RightButton == ButtonState.Pressed && oldMouse.RightButton != ButtonState.Pressed)
                 {
@@ -321,6 +328,14 @@ namespace XNASjakk
                 {
                     int newClickX = 1 + (newMouse.X - xPos) / 80;
                     int newClickY = 1 + (newMouse.Y - yPos) / 80;
+                    int markX = newClickX;
+                    int markY = newClickY;
+
+                    if (rotate)
+                    {
+                        newClickX = GameConstants.boardWidth - newClickX + 1;
+                        newClickY = GameConstants.boardHeight - newClickY + 1;
+                    }
 
                     if (newClickX > 0 && newClickX <= 8 && newClickY > 0 && newClickY <= 8)
                     {
@@ -330,8 +345,8 @@ namespace XNASjakk
                             {
                                 if (piece.X == newClickX && piece.Y == newClickY && piece.Visible)
                                 {
-                                    selectedY = newClickY;
-                                    selectedX = newClickX;
+                                    markY = newClickY;
+                                    markX = newClickX;
                                     selectedPiece = piece;
                                     move = true;
                                 }
@@ -339,15 +354,19 @@ namespace XNASjakk
                         }
                         else if (!(selectedPiece.X == newClickX && selectedPiece.Y == newClickY))
                         {
-                            selectedY = newClickY;
-                            selectedX = newClickX;
+                            markY = newClickY;
+                            markX = newClickX;
 
                             networkManager.SendMove(selectedPiece.Id, newClickX, newClickY);
                             MovePiece(selectedPiece.Id, newClickX, newClickY);
                             move = false;
                         }
                     }
+
+                    selectedX = markX;
+                    selectedY = markY;
                 }
+
 
                 oldMouse = newMouse;
                 oldKey = newKey;
@@ -369,30 +388,59 @@ namespace XNASjakk
             }
             else
             {
-                for (int i = 1; i <= GameConstants.boardHeight; i++)
+                if (!rotate)
                 {
-                    for (int y = 1; y <= GameConstants.boardWidth; y++)
+                    for (int i = 1; i <= GameConstants.boardHeight; i++)
                     {
-                        if (i == selectedX && y == selectedY)
+                        for (int y = 1; y <= GameConstants.boardWidth; y++)
                         {
-                            spriteBatch.Draw(whiteSquare, new Vector2(xPos + ((i - 1) * GameConstants.squareWidth), yPos + ((y - 1) * GameConstants.squareHeight)), move ? Color.Yellow : Color.Red);
-                        }
-                        else
-                        {
-                            if (i % 2 == 0)
-                                spriteBatch.Draw((y % 2 == 0) ? whiteSquare : blackSquare, new Vector2(xPos + ((i - 1) * GameConstants.squareWidth), yPos + ((y - 1) * GameConstants.squareHeight)), Color.White);
+                            if (i == selectedX && y == selectedY)
+                            {
+                                spriteBatch.Draw(whiteSquare, new Vector2(xPos + ((i - 1) * GameConstants.squareWidth), yPos + ((y - 1) * GameConstants.squareHeight)), move ? Color.Yellow : Color.Red);
+                            }
                             else
-                                spriteBatch.Draw((y % 2 == 0) ? blackSquare : whiteSquare, new Vector2(xPos + ((i - 1) * GameConstants.squareWidth), yPos + ((y - 1) * GameConstants.squareHeight)), Color.White);
-                        }
+                            {
+                                if (i % 2 == 0)
+                                    spriteBatch.Draw((y % 2 == 0) ? whiteSquare : blackSquare, new Vector2(xPos + ((i - 1) * GameConstants.squareWidth), yPos + ((y - 1) * GameConstants.squareHeight)), Color.White);
+                                else
+                                    spriteBatch.Draw((y % 2 == 0) ? blackSquare : whiteSquare, new Vector2(xPos + ((i - 1) * GameConstants.squareWidth), yPos + ((y - 1) * GameConstants.squareHeight)), Color.White);
+                            }
 
+                        }
+                    }
+
+                    foreach (ChessPiece piece in pieces)
+                    {
+                        piece.Draw(gameTime, spriteBatch, false);
+                    }
+                }
+                else
+                {
+                    for (int i = 1; i <= GameConstants.boardHeight; i++)
+                    {
+                        for (int y = 1; y <= GameConstants.boardWidth; y++)
+                        {
+                            if (i == selectedX && y == selectedY)
+                            {
+                                spriteBatch.Draw(whiteSquare, new Vector2(xPos + ((7-(i - 1)) * GameConstants.squareWidth), yPos + ((7-(y - 1)) * GameConstants.squareHeight)), move ? Color.Yellow : Color.Red);
+                            }
+                            else
+                            {
+                                if (i % 2 == 0)
+                                    spriteBatch.Draw((y % 2 == 0) ? whiteSquare : blackSquare, new Vector2(xPos + ((7-(i - 1)) * GameConstants.squareWidth), yPos + ((7-(y - 1)) * GameConstants.squareHeight)), Color.White);
+                                else
+                                    spriteBatch.Draw((y % 2 == 0) ? blackSquare : whiteSquare, new Vector2(xPos + ((7-(i - 1)) * GameConstants.squareWidth), yPos + ((7-(y - 1)) * GameConstants.squareHeight)), Color.White);
+                            }
+
+                        }
+                    }
+                    foreach (ChessPiece piece in pieces)
+                    {
+                        piece.Draw(gameTime, spriteBatch, true);
                     }
                 }
 
-                foreach (ChessPiece piece in pieces)
-                {
-                    piece.Draw(gameTime, spriteBatch);
-                }
-
+                
                 // Draw info
 
                 spriteBatch.DrawString(infoFont, infoText, new Vector2(680, 40), Color.Black);
