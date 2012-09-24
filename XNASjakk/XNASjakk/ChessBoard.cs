@@ -79,7 +79,6 @@ namespace XNASjakk
         int selectedX = 0;
         ChessPiece selectedPiece;
 
-        bool server;
         bool move = false;
 
         int id = 1;
@@ -116,16 +115,8 @@ namespace XNASjakk
 
             try
             {
-                server = false;
                 String ipString = System.IO.File.ReadAllText("ipAddresse.txt");
-                if (server)
-                {
-                    networkManager.StartServer(ipString);
-                }
-                else
-                {
-                    networkManager.StartClient(ipString);
-                }
+                networkManager.StartClient(ipString);
             }
             catch (Exception e)
             {
@@ -208,20 +199,13 @@ namespace XNASjakk
         {
             if (!connected)
             {
-                if (server)
+                if (reconnectTimer <= 0)
                 {
-                    connected = networkManager.TryAcceptClient();
+                    connected = networkManager.TryConnect();
+                    reconnectTimer = 5.0; // Added a small timer to enable closing of client window.
                 }
                 else
-                {
-                    if (reconnectTimer <= 0)
-                    {
-                        connected = networkManager.TryConnect();
-                        reconnectTimer = 5.0; // Added a small timer to enable closing of client window.
-                    }
-                    else
-                        reconnectTimer -= gameTime.ElapsedGameTime.TotalSeconds;
-                }
+                    reconnectTimer -= gameTime.ElapsedGameTime.TotalSeconds;
             }
             else if (!hasOpponent)
             {
@@ -235,30 +219,7 @@ namespace XNASjakk
             }
             else if (!disconnected)
             {
-                if (server && networkManager.isDataAvailableServer())
-                {
-                    switch (networkManager.ReturnByte())
-                    {
-                        case 0:
-                            // It was just a ping
-                            break;
-                        case 98:
-                            UndoMove(moves[moves.Count - 1]);
-                            break;
-                        case 99:
-                            receiveMove r = networkManager.ReceiveMove();
-                            MovePiece(r.id, r.x, r.y);
-                            break;
-                        case 100:
-                            // errorString = "Mostander frakoblet. \nEscape for nytt spill.";
-                            disconnected = true;
-                            break;
-                        default:
-
-                            break;
-                    }
-                }
-                else if (!server && networkManager.isDataAvailableClient())
+                if (networkManager.isDataAvailableClient())
                 {
                     switch (networkManager.ReturnByte())
                     {
@@ -388,57 +349,34 @@ namespace XNASjakk
             }
             else
             {
-                if (!rotate)
+                for (int i = 1; i <= GameConstants.boardHeight; i++)
                 {
-                    for (int i = 1; i <= GameConstants.boardHeight; i++)
+                    for (int y = 1; y <= GameConstants.boardWidth; y++)
                     {
-                        for (int y = 1; y <= GameConstants.boardWidth; y++)
+                        if (i == selectedX && y == selectedY && !rotate)
                         {
-                            if (i == selectedX && y == selectedY)
-                            {
-                                spriteBatch.Draw(whiteSquare, new Vector2(xPos + ((i - 1) * GameConstants.squareWidth), yPos + ((y - 1) * GameConstants.squareHeight)), move ? Color.Yellow : Color.Red);
-                            }
-                            else
-                            {
-                                if (i % 2 == 0)
-                                    spriteBatch.Draw((y % 2 == 0) ? whiteSquare : blackSquare, new Vector2(xPos + ((i - 1) * GameConstants.squareWidth), yPos + ((y - 1) * GameConstants.squareHeight)), Color.White);
-                                else
-                                    spriteBatch.Draw((y % 2 == 0) ? blackSquare : whiteSquare, new Vector2(xPos + ((i - 1) * GameConstants.squareWidth), yPos + ((y - 1) * GameConstants.squareHeight)), Color.White);
-                            }
-
+                            spriteBatch.Draw(whiteSquare, new Vector2(xPos + ((i - 1) * GameConstants.squareWidth), yPos + ((y - 1) * GameConstants.squareHeight)), move ? Color.Yellow : Color.Red);
                         }
-                    }
+                        else if (i == 9 - selectedX && y == 9 - selectedY && rotate)
+                        {
+                            spriteBatch.Draw(whiteSquare, new Vector2(xPos + ((i - 1) * GameConstants.squareWidth), yPos + ((y - 1) * GameConstants.squareHeight)), move ? Color.Yellow : Color.Red);
+                        }
+                        else
+                        {
+                            if (i % 2 == 0)
+                                spriteBatch.Draw((y % 2 == 0) ? whiteSquare : blackSquare, new Vector2(xPos + ((i - 1) * GameConstants.squareWidth), yPos + ((y - 1) * GameConstants.squareHeight)), Color.White);
+                            else
+                                spriteBatch.Draw((y % 2 == 0) ? blackSquare : whiteSquare, new Vector2(xPos + ((i - 1) * GameConstants.squareWidth), yPos + ((y - 1) * GameConstants.squareHeight)), Color.White);
+                        }
 
-                    foreach (ChessPiece piece in pieces)
-                    {
-                        piece.Draw(gameTime, spriteBatch, false);
                     }
                 }
-                else
-                {
-                    for (int i = 1; i <= GameConstants.boardHeight; i++)
-                    {
-                        for (int y = 1; y <= GameConstants.boardWidth; y++)
-                        {
-                            if (i == selectedX && y == selectedY)
-                            {
-                                spriteBatch.Draw(whiteSquare, new Vector2(xPos + ((7-(i - 1)) * GameConstants.squareWidth), yPos + ((7-(y - 1)) * GameConstants.squareHeight)), move ? Color.Yellow : Color.Red);
-                            }
-                            else
-                            {
-                                if (i % 2 == 0)
-                                    spriteBatch.Draw((y % 2 == 0) ? whiteSquare : blackSquare, new Vector2(xPos + ((7-(i - 1)) * GameConstants.squareWidth), yPos + ((7-(y - 1)) * GameConstants.squareHeight)), Color.White);
-                                else
-                                    spriteBatch.Draw((y % 2 == 0) ? blackSquare : whiteSquare, new Vector2(xPos + ((7-(i - 1)) * GameConstants.squareWidth), yPos + ((7-(y - 1)) * GameConstants.squareHeight)), Color.White);
-                            }
 
-                        }
-                    }
-                    foreach (ChessPiece piece in pieces)
-                    {
-                        piece.Draw(gameTime, spriteBatch, true);
-                    }
+                foreach (ChessPiece piece in pieces)
+                {
+                    piece.Draw(gameTime, spriteBatch, rotate);
                 }
+                
 
                 
                 // Draw info

@@ -9,16 +9,9 @@ namespace XNASjakk
     class NetworkManager
     {
 
-        // Server Related
-        TcpListener listener;
-        Socket s;
-        NetworkStream serverStream;
-        // ---
-
         // Client
         TcpClient client;
         NetworkStream clientStream;
-
         // ---
 
         string ip;
@@ -62,41 +55,6 @@ namespace XNASjakk
             return(sb.ToString());
         }
 
-        public bool StartServer(string ip)
-        {
-            this.ip = ip;
-            try
-            {
-                IPAddress local = IPAddress.Parse(ip);
-                listener = new TcpListener(local, 8001);
-                listener.Start();
-                return true;
-            }
-            catch (Exception e)
-            {
-                return false;
-            }
-        }
-
-        public bool TryAcceptClient()
-        {
-            try
-            {
-                if(listener.Pending())
-                    s = listener.AcceptSocket();
-                
-                serverStream = new NetworkStream(s);
-
-                bw = new BinaryWriter(serverStream);
-                br = new BinaryReader(serverStream);
-                return true;
-            }
-            catch (Exception e)
-            {
-                return false;
-            }
-        }
-
         public bool StartClient(string ip)
         {
             try
@@ -105,6 +63,7 @@ namespace XNASjakk
 
                 this.ip = ip;
                 string onlineIP = receiveIP();
+                onlineIP = "192.168.0.105";
                 if (this.ip != onlineIP)
                 {
                     this.ip = onlineIP;
@@ -171,13 +130,6 @@ namespace XNASjakk
             }
         }
 
-        public bool isDataAvailableServer()
-        {
-            if (s.Available > 0)
-                return true;
-            else
-                return false;
-        }
         public bool isDataAvailableClient()
         {
             return clientStream.DataAvailable;
@@ -185,11 +137,6 @@ namespace XNASjakk
 
         public void CloseDown()
         {
-            if (s != null)
-            {
-                s.Close();
-                listener.Stop();
-            }
             if (client != null)
                 client.Close();
         }
